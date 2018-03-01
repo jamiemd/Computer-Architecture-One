@@ -10,9 +10,14 @@ const HLT = 0b00000001; // Halt CPU
 const ADD = 0b10101000; // ADD R R
 const MUL = 0b10101010; // MUL R R
 const LDI = 0b10011001; // LDI R I
-const PRN = 0b01000011; // Print
-// !!! IMPLEMENT ME
+const PRN = 0b01000011;
+const CALL = 0b01001000;
+const RET = 0b00001001;
+const NOP = 0b00000000;
+const PUSH = 0b1001101;
+const POP = 0b1001100;
 
+const SP = 7;
 
 /**
  * Class for simulating a simple Computer (CPU & memory)
@@ -31,6 +36,9 @@ class CPU {
         this.reg.PC = 0; // Program Counter
         this.reg.IR = 0; // Instruction Register
 
+        // Init the stack pointer
+        this.reg[SP] = 0xf3;
+
         this.setupBranchTable();
     }
 
@@ -39,15 +47,18 @@ class CPU {
 	 */
     setupBranchTable() {
         let bt = {};
+        // !!! IMPLEMENT ME
 
         bt[HLT] = this.HLT;
-        // !!! IMPLEMENT ME
-        // LDI
         bt[LDI] = this.LDI;
-        // MUL
         bt[MUL] = this.MUL;
-        // PRN
         bt[PRN] = this.PRN;
+        bt[CALL] = this.CALL;
+        bt[ADD] = this.ADD;
+        bt[RET] = this.RET;
+        bt[NOP] = this.NOP;
+        bt[PUSH] = this.PUSH;
+        bt[POP] = this.POP;
 
         this.branchTable = bt;
     }
@@ -105,13 +116,12 @@ class CPU {
         // !!! IMPLEMENT ME
         this.reg.IR = this.ram.read(this.reg.PC);
 
-        // Debugging output
+        // Debugging output array index and array value
         // console.log(`${this.reg.PC}: ${this.reg.IR.toString(2)}`);
 
         // Based on the value in the Instruction Register, locate the
         // appropriate hander in the branchTable
         // !!! IMPLEMENT ME
-        // let handler = ...
         let handler = this.branchTable[this.reg.IR];
         // Check that the handler is defined, halt if not (invalid
         // instruction)
@@ -127,11 +137,15 @@ class CPU {
 
         // We need to use call() so we can set the "this" value inside
         // the handler (otherwise it will be undefined in the handler)
-        handler.call(this, operandA, operandB);
+        let nextPC = handler.call(this, operandA, operandB);
 
-        // Increment the PC register to go to the next instruction
-        // !!! IMPLEMENT ME
-        this.reg.PC += ((this.reg.IR >> 6) & 0b00000011) + 1;
+        if (nextPC == undefined) {
+            // Increment the PC register to go to the next instruction
+            // !!! IMPLEMENT ME
+            this.reg.PC += ((this.reg.IR >> 6) & 0b00000011) + 1;;
+        } else {
+            this.reg.PC = nextPC;
+        }
     }
 
     // INSTRUCTION HANDLER CODE:
@@ -182,18 +196,39 @@ class CPU {
     }
 
     pushHelper(value) {
-        this.reg[SP] = this.reg[SP - 1];
+        this.reg[SP]--;
         this.ram.write(this.reg[SP], value);
 
     }
 
-    CALL(regNum) {
-        pushHelper(this.reg.PC + 2);
+    popHelper() {
+        let val = this.ram.read(this.reg[SP]);
+        this.reg[SP]++;
+
+        return val;
     }
 
+    CALL(regNum) {
+        this.pushHelper(this.reg.PC + 2);
+
+        return this.reg[regNum];
+    }
+
+
     PUSH(regNum, flag) {
-        let value = this.reg[regNUm];
-        pushHelper(value);
+        let value = this.reg[regNum];
+
+        this.pushHelper(value);
+    }
+
+    POP(regNum) {
+        let val = this.popHelper();
+
+        this.reg[regNum] = val;
+    }
+
+    RET(regNum) {
+        this.popHelper(regNum);
     }
 
 }
