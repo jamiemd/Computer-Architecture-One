@@ -16,8 +16,14 @@ const RET = 0b00001001;
 const NOP = 0b00000000;
 const PUSH = 0b1001101;
 const POP = 0b1001100;
+const CMP = 0b1010000;
+
 
 const SP = 7;
+
+const FL_EQ = 0b00000001;
+const FL_GT = 0b00000010;
+const FL_LT = 0b00000100;
 
 /**
  * Class for simulating a simple Computer (CPU & memory)
@@ -35,6 +41,7 @@ class CPU {
         // Special-purpose registers
         this.reg.PC = 0; // Program Counter
         this.reg.IR = 0; // Instruction Register
+        this.reg.FL = 0; // Flags
 
         // Init the stack pointer
         this.reg[SP] = 0xf3;
@@ -59,6 +66,7 @@ class CPU {
         bt[NOP] = this.NOP;
         bt[PUSH] = this.PUSH;
         bt[POP] = this.POP;
+        bt[CMP] = this.CMP;
 
         this.branchTable = bt;
     }
@@ -88,6 +96,17 @@ class CPU {
         clearInterval(this.clock);
     }
 
+
+
+    // set flag
+    setFlag(flag, vlaue) {
+        if (value == true) {
+            this.reg.FL = this.reg.FL | flag;
+        } else {
+            this.reg.FL = this.reg.FL & (~flag);
+        }
+    }
+
     /**
      * ALU functionality
      * 
@@ -96,13 +115,16 @@ class CPU {
     alu(op, regA, regB) {
         switch (op) {
             case 'MUL':
-                // !!! IMPLEMENT ME
                 this.reg[regA] = this.reg[regA] * this.reg[regB]
                 break;
-
             case 'ADD':
-                // !!! IMPLEMENT ME
                 this.reg[regA] = this.reg[regA] + this.reg[regB]
+                break;
+            case 'AND':
+                this.reg[regA] = this.reg[regA] & this.reg[regB]
+                break;
+            case 'CMP':
+                this.reg.FL = setFlag(FL_EQ, this.reg[regA] == this.reg[regB]);
                 break;
         }
     }
@@ -117,7 +139,7 @@ class CPU {
         this.reg.IR = this.ram.read(this.reg.PC);
 
         // Debugging output array index and array value
-        // console.log(`${this.reg.PC}: ${this.reg.IR.toString(2)}`);
+        console.log(`${this.reg.PC}: ${this.reg.IR.toString(2)}`);
 
         // Based on the value in the Instruction Register, locate the
         // appropriate hander in the branchTable
@@ -227,9 +249,17 @@ class CPU {
         this.reg[regNum] = val;
     }
 
-    RET(regNum) {
-        this.popHelper(regNum);
+    RET() {
+        return this.popHelper();
+
     }
+
+    CMP(regA, regB) {
+        this.alu('CMP', regA, regB);
+    }
+
+
+
 
 }
 
