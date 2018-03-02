@@ -16,7 +16,10 @@ const RET = 0b00001001;
 const NOP = 0b00000000;
 const PUSH = 0b1001101;
 const POP = 0b1001100;
-const CMP = 0b1010000;
+const CMP = 0b10100000;
+const JMP = 0b01010000;
+const JEQ = 0b01010001;
+const JNE = 0b01010010;
 
 
 const SP = 7;
@@ -67,6 +70,9 @@ class CPU {
         bt[PUSH] = this.PUSH;
         bt[POP] = this.POP;
         bt[CMP] = this.CMP;
+        bt[JMP] = this.JMP;
+        bt[JEQ] = this.JEQ;
+        bt[JNE] = this.JNE;
 
         this.branchTable = bt;
     }
@@ -99,11 +105,15 @@ class CPU {
 
 
     // set flag
-    setFlag(flag, vlaue) {
+    setFlag(flag, value) {
         if (value == true) {
             this.reg.FL = this.reg.FL | flag;
+            // console.log('flag true', this.reg.FL)
+            return this.reg.FL;
         } else {
             this.reg.FL = this.reg.FL & (~flag);
+            // console.log('flag false', this.reg.FL)
+            return this.reg.FL;
         }
     }
 
@@ -124,8 +134,9 @@ class CPU {
                 this.reg[regA] = this.reg[regA] & this.reg[regB]
                 break;
             case 'CMP':
-                this.reg.FL = setFlag(FL_EQ, this.reg[regA] == this.reg[regB]);
+                this.reg.FL = this.setFlag(FL_EQ, this.reg[regA] == this.reg[regB]);
                 break;
+
         }
     }
 
@@ -142,7 +153,7 @@ class CPU {
         console.log(`${this.reg.PC}: ${this.reg.IR.toString(2)}`);
 
         // Based on the value in the Instruction Register, locate the
-        // appropriate hander in the branchTable
+        // appropriate handler in the branchTable
         // !!! IMPLEMENT ME
         let handler = this.branchTable[this.reg.IR];
         // Check that the handler is defined, halt if not (invalid
@@ -256,6 +267,25 @@ class CPU {
 
     CMP(regA, regB) {
         this.alu('CMP', regA, regB);
+    }
+
+    JMP(regNum) {
+        this.reg.PC = regNum
+        return this.reg[regNum];
+    }
+
+    JEQ(regNum) {
+        // console.log('this.reg.fl JEQ', this.reg.FL);
+        if (this.reg.FL == 1) {
+            return this.reg[regNum];
+        }
+    }
+
+    JNE(regNum) {
+        // console.log('this.reg.fl JNE', this.reg.FL);
+        if (this.reg.FL == 0) {
+            return this.reg[regNum];
+        }
     }
 
 
