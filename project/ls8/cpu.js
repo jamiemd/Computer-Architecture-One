@@ -11,6 +11,7 @@ const ADD = 0b10101000; // ADD R R
 const MUL = 0b10101010; // MUL R R
 const LDI = 0b10011001; // LDI R I
 const PRN = 0b01000011;
+const AND = 0b10110011;
 const CALL = 0b01001000;
 const RET = 0b00001001;
 const NOP = 0b00000000;
@@ -65,6 +66,7 @@ class CPU {
         bt[PRN] = this.PRN;
         bt[CALL] = this.CALL;
         bt[ADD] = this.ADD;
+        bt[AND] = this.AND;
         bt[RET] = this.RET;
         bt[NOP] = this.NOP;
         bt[PUSH] = this.PUSH;
@@ -136,7 +138,6 @@ class CPU {
             case 'CMP':
                 this.reg.FL = this.setFlag(FL_EQ, this.reg[regA] == this.reg[regB]);
                 break;
-
         }
     }
 
@@ -190,6 +191,10 @@ class CPU {
     ADD(regA, regB) {
         // !!! IMPLEMENT ME
         this.alu('ADD', regA, regB)
+    }
+
+    AND(regA, regB) {
+        this.alu('AND', regA, regB);
     }
 
     /**
